@@ -28,61 +28,12 @@ library(dplyr)
 easyshare <- easyshare %>%  dplyr::select(c(wave, age, female, country_mod, isced1997_r, chronic_mod, ever_smoked, br010_mod, casp, eurod, bmi2, sp002_mod, sp008_, br015_, mar_stat, euro5, recall_1, recall_2, orienti, numeracy_1, numeracy_2))
 # rename
 easyshare <- easyshare %>% rename(education = isced1997_r, drinking = br010_mod, depression = eurod, recieve_help = sp002_mod, give_help = sp008_, vigorous_act = br015_, sleep = euro5)
-```
 
---------------------wave:
-
-```{r}
-# show the observations in each wave
-table(easyshare$wave)
-```
-
-choose wave 4,5,6,7,8 since they contain large number of variables
-
-
-----------------cognitives score
-
-EasySHARE does not record diagnosis of dementia (e.g. Alzheimer's disease) in all waves. Instead, we will create a composite cognitive score as a proxy for dementia severity, following [Crimmins et al. (2011)](https://pubmed.ncbi.nlm.nih.gov/21743047/).
-
-since variables orienti, numeracy_1 and numeracy_2 have high amount of missing values in waves 4, 5, 6, 7, and 8, so it is reasonable to only add recall_1 and recall_2 as the cognitive score
-
-```{r}
-# create a composite cognitive score as a proxy for dementia severity
-easyshare$cogscore = easyshare$recall_1 + easyshare$recall_2
-```
-
-
-----------------------Country:
-
-Austria 40, Belgium 56, Bulgaria 100, Croatia 191, Cyprus 196, Czech Republic 203, 
-Denmark 208, Estonia 233, Finland 246, France 250, Germany 276, Greece 300, Hungary 348, Ireland 372, Israel 376, 
-Italy 380, Latvia 428, Lithuania 440, Luxembourg 442, Malta 470, the Netherlands 528, Poland 616, Portugal 620, 
-Romania 642, Slovakia 703, Slovenia 705, Spain 724, Sweden 752, and Switzerland 756. 
-
-As mentioned in the (Dementia prevention, intervention, and care), more dementias occur in low-income and middle-income countries (LMIC), however, according to the recording to the Countries by Income Group, expect Hungary, Bulgaria and Romania are Upper-middle-income countriesm, all other countries are High-income countries, so we can not divided countries into groups by income because of the inbalance sample between groups.
-
-divided into 4 parts west north south and east according to https://en.wikipedia.org/wiki/Regions_of_Europe:
-east: Czech Republic, Hungary, Latvia, Slovak Republic
-west: Austria, Belgium, France, Germany, Luxembourg, Netherlands, Switzerland
-north: Denmark, Estonia, Finland, Ireland, Lithuania, Poland, Sweden
-south: Bulgaria, Croatia, Cyprus, Greece, Israel, Italy, Malta, Portugal, Romania, Slovenia, Spain
-
-```{r}
-easyshare$area <- ifelse(easyshare$country_mod %in% c(203,348,428,703), "E", ifelse(easyshare$country_mod %in% c(40,56,250,276,442,528,756), "W", ifelse(easyshare$country_mod %in% c(208,233,246,372,440,616,752), "N", "S")))
-```
-
-
-------------------- visualize variables
-
-
-```{r}
 # set missing value as NA
 easyshare[easyshare < 0] <- NA
 
 easyshare$age <- cut(easyshare$age, breaks = c(0,seq(50,90,10),120), ordered_result = TRUE, right = FALSE)
-easyshare$cogscore <- cut(easyshare$cogscore, breaks = c(0, quantile(easyshare$cogscore, probs = c(.1,.4),na.rm=TRUE),29), ordered_result = TRUE)
 easyshare$casp <- cut(easyshare$casp, breaks = c(12, quantile(easyshare$casp, probs = c(.1,.4),na.rm=TRUE),48), ordered_result = TRUE)
-easyshare$area<- factor(easyshare$area)
 easyshare$female <- factor(easyshare$female)
 easyshare$education <- factor(easyshare$education, ordered = TRUE)
 easyshare$chronic_mod <- factor(easyshare$chronic_mod)
@@ -98,13 +49,70 @@ easyshare$sleep <- factor(easyshare$sleep)
 # head(easyshare)
 ```
 
+--------------------wave:
+
+```{r}
+# show the observations in each wave
+table(easyshare$wave)
+library(naniar)
+matrixplot(easyshare[easyshare$wave==2,], col = c("firebrick1", "dodgerblue"))
+vis_miss(easyshare[easyshare$wave==2,])
+easyshare = easyshare[easyshare$wave==5,]
+
+library(Amelia)
+missmap(easyshare[easyshare$wave==2,], col = c("firebrick1", "dodgerblue"))
+
+```
+
+choose wave 4,5,6,7,8 since they contain large number of variables
+
+
+----------------cognitives score
+
+EasySHARE does not record diagnosis of dementia (e.g. Alzheimer's disease) in all waves. Instead, we will create a composite cognitive score as a proxy for dementia severity, following [Crimmins et al. (2011)](https://pubmed.ncbi.nlm.nih.gov/21743047/).
+
+since variables orienti, numeracy_1 and numeracy_2 have high amount of missing values in waves 4, 5, 6, 7, and 8, so it is reasonable to only add recall_1 and recall_2 as the cognitive score
+
+```{r}
+# create a composite cognitive score as a proxy for dementia severity
+easyshare$cogscore = easyshare$recall_1 + easyshare$recall_2
+easyshare$cogscore <- cut(easyshare$cogscore, breaks = c(0, quantile(easyshare$cogscore, probs = c(.1,.4),na.rm=TRUE),29), ordered_result = TRUE)
+```
+
+
+----------------------Country:
+
+Austria 40, Belgium 56, Bulgaria 100, Croatia 191, Cyprus 196, Czech Republic 203, 
+Denmark 208, Estonia 233, Finland 246, France 250, Germany 276, Greece 300, Hungary 348, Ireland 372, Israel 376, 
+easyshare_sub 380, Latvia 428, Lithuania 440, Luxembourg 442, Malta 470, the Netherlands 528, Poland 616, Portugal 620, 
+Romania 642, Slovakia 703, Slovenia 705, Spain 724, Sweden 752, and Switzerland 756. 
+
+As mentioned in the (Dementia prevention, intervention, and care), more dementias occur in low-income and middle-income countries (LMIC), however, according to the recording to the Countries by Income Group, expect Hungary, Bulgaria and Romania are Upper-middle-income countriesm, all other countries are High-income countries, so we can not divided countries into groups by income because of the inbalance sample between groups.
+
+divided into 4 parts west north south and east according to https://en.wikipedia.org/wiki/Regions_of_Europe:
+east: Czech Republic, Hungary, Latvia, Slovak Republic
+west: Austria, Belgium, France, Germany, Luxembourg, Netherlands, Switzerland
+north: Denmark, Estonia, Finland, Ireland, Lithuania, Poland, Sweden
+south: Bulgaria, Croatia, Cyprus, Greece, Israel, easyshare_sub, Malta, Portugal, Romania, Slovenia, Spain
+
+```{r}
+easyshare$country_area <- ifelse(easyshare$country_mod %in% c(203,348,428,703), "E", ifelse(easyshare$country_mod %in% c(40,56,250,276,442,528,756), "W", ifelse(easyshare$country_mod %in% c(208,233,246,372,440,616,752), "N", "S")))
+easyshare$country_area<- factor(easyshare$country_area)
+```
+
+
+------------------- visualize variables
+
+
+
+
 ```{r}
 easyshare_sub = subset(easyshare, easyshare$wave %in% c("4", "5", "6", "7", "8"))
 ggplot() + geom_bar(aes(x = easyshare_sub$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
 ggplot() + geom_bar(aes(x = easyshare_sub$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
 ggplot() + geom_bar(aes(x = easyshare_sub$casp),color="darkblue", fill="lightblue")+  labs(x ="Quality of life")
 
-ggplot() + geom_bar(aes(x = easyshare_sub$area),color="darkblue", fill="lightblue")+  labs(x ="Area(country)")
+ggplot() + geom_bar(aes(x = easyshare_sub$country_area),color="darkblue", fill="lightblue")+  labs(x ="country_area(country)")
 ggplot() + geom_bar(aes(x = easyshare_sub$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
 ggplot() + geom_bar(aes(x = easyshare_sub$education),color="darkblue", fill="lightblue")+  labs(x ="Education") + geom_density(color = "black", fill = "gray")
 ggplot() + geom_bar(aes(x = easyshare_sub$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
@@ -136,7 +144,7 @@ levels(easyshare_sub$casp) <- c("low","moderate","high")
 # gender
 levels(easyshare_sub$female) <- c("male","female")
 # education
-easyshare_sub$education=easyshare_sub$education %>% fct_collapse("other" = c("95","97"))
+easyshare_sub$education=easyshare_sub$education %>% fct_collapse("6" = c("6","95","97"))
 # Number of chronic diseases: 7,8,9 are not included in chronic_mod
 easyshare_sub$chronic_mod[which(easyshare_sub$chronic_mod %in% c("7","8","9"))]=NA
 easyshare_sub$chronic_mod=droplevels(easyshare_sub$chronic_mod)
@@ -154,7 +162,7 @@ levels(easyshare_sub$recieve_help) <- c("yes","no")
 levels(easyshare_sub$give_help) <- c("yes","no")
 # marriage state: registered partnership and marriage are now virtually the same, from a legal point of view
 # easyshare_sub$mar_stat=easyshare_sub$mar_stat %>% fct_collapse()
-levels(easyshare_sub$mar_stat) <- list("never married" = "4", "divorced" = "5", "widowed" = "6", "married" = c("1","2","3"))
+levels(easyshare_sub$mar_stat) <- list("married" = c("1","2","3"), "never married" = "4", "divorced" = "5", "widowed" = "6")
 # sleep
 levels(easyshare_sub$sleep) <- c("no","yes")
 
@@ -166,11 +174,31 @@ levels(easyshare_sub$sleep) <- c("no","yes")
 # body mass index
 # marriage state 
 
-
+# drop useless variables
+easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, recall_2, orienti, numeracy_1, numeracy_2))
 #### drop variables NA
-new<- easyshare_sub[complete.cases(easyshare_sub),]
+easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
 ```
 
+```{r}
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$casp),color="darkblue", fill="lightblue")+  labs(x ="Quality of life")
+
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$country_area),color="darkblue", fill="lightblue")+  labs(x ="country_area(country)")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$education),color="darkblue", fill="lightblue")+  labs(x ="Education") + geom_density(color = "black", fill = "gray")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$ever_smoked),color="darkblue", fill="lightblue")+  labs(x ="Ever smoked daily")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$drinking),color="darkblue", fill="lightblue")+  labs(x ="Drinking behavior")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$depression),color="darkblue", fill="lightblue")+  labs(x ="Depression scale")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$bmi2),color="darkblue", fill="lightblue")+  labs(x ="Body Mass Index")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$recieve_help),color="darkblue", fill="lightblue")+  labs(x ="Received help from outside the household")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$give_help),color="darkblue", fill="lightblue")+  labs(x ="Given help to others outside the household")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$vigorous_act),color="darkblue", fill="lightblue")+  labs(x ="vigorous activities")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$mar_stat),color="darkblue", fill="lightblue")+  labs(x ="Marital status")
+ggplot() + geom_bar(aes(x = easyshare_sub_narm$sleep),color="darkblue", fill="lightblue")+  labs(x ="Sleep")
+```
 
 -------------------------------- BN-------------------------------
 
@@ -181,68 +209,206 @@ library(Rgraphviz)
 ```
 
 ```{r}
+# Constraint-based algorithms
 myblacklist = matrix(c("cogscore","age",
                    "female","age",
+                   'country_area', "age",
                    "education","age",
-                   'self_perceived_health', "age",
-                   'chronic_mod', "age",
-                   'smoking', "age",
+                   "chronic_mod","age",
                    'ever_smoked', "age",
                    'drinking', "age",
                    'casp', "age",
                    'depression', "age",
                    'bmi2', "age",
-                   'daily_act', "age",
-                   'daily_instrumental_act', "age",
                    'recieve_help', "age",
                    'give_help', "age",
                    'vigorous_act', "age",
                    'mar_stat', "age",
                    'sleep',"age",
                    "age","female",
+                   "country_area","female",
                    "education","female",
                    "cogscore","female",
-                   'self_perceived_health', "female",
                    'chronic_mod', "female",
-                   'smoking', "female",
                    'ever_smoked', "female",
                    'drinking', "female",
                    'casp', "female",
                    'depression', "female",
                    'bmi2', "female",
-                   'daily_act', "female",
-                   'daily_instrumental_act', "female",
                    'recieve_help', "female",
                    'give_help', "female",
                    'vigorous_act', "female",
                    'mar_stat', "female",
                    'sleep',"female",
+                   "age","country_area",
+                   "female","country_area",
+                   "education","country_area",
+                   "cogscore","country_area",
+                   'chronic_mod', "country_area",
+                   'ever_smoked', "country_area",
+                   'drinking', "country_area",
+                   'casp', "country_area",
+                   'depression', "country_area",
+                   'bmi2', "country_area",
+                   'recieve_help', "country_area",
+                   'give_help', "country_area",
+                   'vigorous_act', "country_area",
+                   'mar_stat', "country_area",
+                   'sleep',"country_area",
                    "cogscore","education",
-                   "cogscore",'self_perceived_health', 
                    "cogscore",'chronic_mod', 
-                   "cogscore",'smoking', 
                    "cogscore",'ever_smoked', 
                    "cogscore",'drinking', 
                    "cogscore",'casp', 
                    "cogscore",'depression', 
                    "cogscore",'bmi2', 
-                   "cogscore",'daily_act', 
-                   "cogscore",'daily_instrumental_act', 
                    "cogscore",'recieve_help', 
                    "cogscore",'give_help', 
                    "cogscore", 'vigorous_act', 
                    "cogscore",'mar_stat', 
-                   "cogscore",'sleep',
-                   "education","mar_stat",
-                   "education",'self_perceived_health',
-                   "education",'chronic_mod',
-                   "education",'bmi2'), 
+                   "cogscore",'sleep'), 
                  byrow = TRUE, ncol=2, dimnames =list(NULL,c("from","to")))
+```
+
+overweight affect chemicals' releasing in brain, and dementia
+overweight and age are significant factors for getting diabetic 
+
+men and women who had entered middle age out of shape but then gained fitness showed the same substantial reduction in their subsequent risk of dementia
+
+regular social contact have significantly better cognitive function: consider job
+depression and social isolation have been shown as strong risk factors in dementia
+
+
+```{r}
+# mywhitelist = matrix(c("bmi2","chronic_mod",
+#                    "age ",'country_area',
+#                    "education",'bmi2'), 
+#                  byrow = TRUE, ncol=2, dimnames =list(NULL,c("from","to")))
+
 
 # Use incremental association Markov blanket to learn the DAG
 easyshare_sub.iamb =iamb(easyshare_sub, blacklist = myblacklist, test="mi")
 graphviz.plot(easyshare_sub.iamb)
 ```
 
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc =hc(easyshare_sub_narm, blacklist = myblacklist, score="loglik")
+graphviz.plot(easyshare_sub.hc)
 
+```
+
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc2 =hc(easyshare_sub_narm, blacklist = myblacklist)
+graphviz.plot(easyshare_sub.hc2)
+```
+
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc3 =hc(easyshare_sub_narm, blacklist = myblacklist, score="aic")
+graphviz.plot(easyshare_sub.hc3)
+```
+
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+# "bds" "mbde" same
+easyshare_sub.hc4 =hc(easyshare_sub_narm, blacklist = myblacklist, score="bde")
+graphviz.plot(easyshare_sub.hc4)
+```
+
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc5 =hc(easyshare_sub_narm, blacklist = myblacklist, score="bdla")
+graphviz.plot(easyshare_sub.hc5)
+```
+
+```{r}
+# Score-based algorithms
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc6 =hc(easyshare_sub_narm, blacklist = myblacklist, score="k2")
+graphviz.plot(easyshare_sub.hc6)
+```
+
+```{r}
+# Score-based algorithms qnml
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc7 =hc(easyshare_sub_narm, blacklist = myblacklist, score="fnml")
+graphviz.plot(easyshare_sub.hc7)
+```
+
+```{r}
+# Score-based algorithms 
+# Use hill-climbing to determine the DAG
+easyshare_sub.hc8 =hc(easyshare_sub_narm, blacklist = myblacklist, score="qnml")
+graphviz.plot(easyshare_sub.hc8)
+```
+
+```{r}
+# Let's fit the local distributions corresponding to DAG found by hc using ordered logistic regression
+easyshare_sub.hc2.fit = bn.fit(easyshare_sub.hc2, data = easyshare_sub_narm, method = "bayes", iss = 10)
+
+edu.olr.fitf =polr(education ~ age, data = easyshare_sub_narm[easyshare_sub_narm$female==1,])
+edu.olr.fitm =polr(education ~ age, data = easyshare_sub_narm[easyshare_sub_narm$female==0,])
+edu.lv = levels(easyshare_sub_narm$education)
+age.lv = levels(easyshare_sub_narm$age)
+f.lv = levels(easyshare_sub_narm$female)
+combos = data.frame(age=age.lv)
+disteduf = predict(edu.olr.fitf, newdata= combos ,type="p")
+distedum = predict(edu.olr.fitm, newdata= combos ,type="p")
+distedu = array(dim = c(length(edu.lv), length(age.lv), length(f.lv)), dimnames = list(education = edu.lv, age = age.lv, female = f.lv))
+distedu[,,1] = array(t(distedum), dim=c(length(edu.lv), length(age.lv), 1))
+distedu[,,2] = array(t(disteduf), dim=c(length(edu.lv), length(age.lv), 1))
+easyshare_sub.hc2.fit$education  = distedu
+
+olr.fitf =polr(cogscore ~ age + education, data = easyshare_sub_narm[easyshare_sub_narm$female==1,])
+olr.fitm =polr(cogscore ~ age + education, data = easyshare_sub_narm[easyshare_sub_narm$female==0,])
+cs.lv = levels(easyshare_sub_narm$cogscore)
+combos = data.frame(age=rep(age.lv,length(edu.lv)), education=rep(edu.lv,each = length(age.lv)))
+distcsf = predict(olr.fitf, newdata= combos ,type="p")
+distcsm = predict(olr.fitm, newdata= combos ,type="p")
+distcs = array(dim = c(length(cs.lv), length(age.lv), length(f.lv), length(edu.lv)), dimnames = list(cogscore = cs.lv, age = age.lv, female = f.lv, education = edu.lv))
+distcs[,,1,] = array(t(distcsm), dim=c(length(cs.lv), length(age.lv), 1, length(edu.lv)))
+distcs[,,2,] = array(t(distcsf), dim=c(length(cs.lv), length(age.lv), 1, length(edu.lv)))
+easyshare_sub.hc2.fit$cogscore  = distcs
+```
+
+
+
+
+
+model fitting
+
+```{r}
+# ci.test
+
+```
+
+
+
+
+```{r}
+# fit parameters
+# case 1
+bn.bayes = bn.fit(dag,data=easyshare_sub, method = "bayes", iss = 10)
+bn.bayes$education
+bn.fit.barchart(bn.bayes$education)
+
+#case 2
+library(MASS)
+olr.fit =polr(education ~ age, data = easyshare_sub)
+distedu = predict(olr.fit, newdata= data.frame(age=levels(easyshare_sub$age)),type="p")
+edu.lv = levels(easyshare_sub$education)
+age.lv = levels(easyshare_sub$age)
+distedu = array(t(distedu), dim=c(length(edu.lv),length(age.lv)), 
+                dimnames = list(education = edu.lv, age = age.lv))
+bn.bayes2 = bn.bayes
+bn.bayes2$education = distedu
+bn.fit.barchart(bn.bayes2$education)
+```
 
