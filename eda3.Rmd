@@ -9,9 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r packs, message = FALSE}
+library(ggplot2)
+library(tidyverse)
+library(gridExtra)
+library(dplyr)
+library(Amelia)
+library(forcats)
+library(bnlearn)
+library(Rgraphviz)
+```
+
+#### Data Preparation
+
 ```{r}
+# load dataset
 load("easySHARE_rel8_0_0.rda")
 easyshare = easySHARE_rel8_0_0
+
 # select variables
 easyshare <- easyshare %>%  dplyr::select(c(wave, age, female, country_mod, isced1997_r, chronic_mod, ever_smoked, smoking, br010_mod, eurod, bmi2, sp002_mod, sp008_, br015_, recall_1, recall_2))
 # rename
@@ -20,20 +35,15 @@ easyshare <- easyshare %>% rename(education = isced1997_r, drinking = br010_mod,
 # set missing value as NA
 easyshare[easyshare < 0] <- NA
 
+# discretize and factorise variables
 easyshare$age <- cut(easyshare$age, breaks = c(0,seq(55,90,5),120), ordered_result = TRUE, right = FALSE)
-#easyshare$casp <- cut(easyshare$casp, breaks = c(12, quantile(easyshare$casp, probs = c(.1,.4),na.rm=TRUE),48), ordered_result = TRUE)
 easyshare$female <- factor(easyshare$female, ordered = TRUE)
 easyshare$education <- factor(easyshare$education, ordered = TRUE)
 easyshare$chronic_mod <- factor(easyshare$chronic_mod, ordered = TRUE)
-#easyshare$ever_smoked <- factor(easyshare$ever_smoked, ordered = TRUE)
 easyshare$drinking <- factor(easyshare$drinking, ordered = TRUE)
 easyshare$depression <- factor(easyshare$depression, ordered = TRUE)
 easyshare$bmi2 <- factor(easyshare$bmi2, ordered = TRUE)
 easyshare$vigorous_act <- factor(easyshare$vigorous_act, ordered = TRUE)
-#easyshare$sleep <- factor(easyshare$sleep, ordered = TRUE)
-# easyshare$mar_stat <- factor(easyshare$mar_stat, ordered = TRUE)
-# easyshare$recieve_help <- factor(easyshare$recieve_help, ordered = TRUE)
-# easyshare$give_help <- factor(easyshare$give_help, ordered = TRUE)
 
 # create a composite cognitive score as a proxy for dementia severity
 easyshare$cogscore = easyshare$recall_1 + easyshare$recall_2
@@ -47,10 +57,7 @@ easyshare$country_area<- factor(easyshare$country_area, ordered = TRUE)
 easyshare$social_help <- easyshare$sp002_mod + easyshare$sp008_
 easyshare$social_help <- factor(easyshare$social_help, ordered = TRUE)
 
-# physical inactivity
-# easyshare$daily_act <- easyshare$adla + easyshare$iadlza
-# easyshare$daily_act <- factor(easyshare$daily_act, ordered = TRUE)
-
+# create a smoke variable
 easyshare$smoke <- easyshare$ever_smoked + easyshare$smoking
 easyshare$smoke <- factor(easyshare$smoke, ordered = TRUE)
 
@@ -266,26 +273,22 @@ gender.lv = levels(easyshare_sub_narm$female)
 edu.lv = levels(easyshare_sub_narm$education)
 dep.lv = levels(easyshare_sub_narm$depression)
 
-p=c()
 for (i in 1:dim(bn.bayes$cogscore$prob)[3]){
   for (j in 1:dim(bn.bayes$cogscore$prob)[4]){
     for (k in 1:dim(bn.bayes$cogscore$prob)[5]){
-      for (t in 1:24){
-        p[t] = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,j,k]), ncol =1), 
+        print(ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,j,k]), ncol =1), 
                            color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
         geom_point() +
         geom_line() + 
         scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
         labels=levels(easyshare_sub_narm$age)) +
         labs(x = "Age", y= "Conditional probability", color = "Cognitive score", 
-             title = paste(gender.lv[i],paste(edu.lv[j],"education",sep=' '),paste(dep.lv[k],"depression",sep=' '),sep=', '))
-      }
-      
+             title = paste(gender.lv[i],paste(edu.lv[j],"education",sep=' '),paste(dep.lv[k],"depression",sep=' '),sep=', ')))
     }
   }
 }
 
-grid.arrange(p, nrow = 3)
+grid.arrange(p[1])
 ```
 
 
@@ -547,8 +550,37 @@ bn.fit.barchart(bn.bayes2$education)
 ```
 
 
+```{r}
+library(MASS)
+olr.fitf =polr(cogscore ~ age + education+depression, data = easyshare_sub_narm[easyshare_sub_narm$female=="female",])
+olr.fitm =polr(cogscore ~ age + education+depression, data = easyshare_sub_narm[easyshare_sub_narm$female=="male",])
+edu.lv = levels(easyshare_sub_narm$education)
+age.lv = levels(easyshare_sub_narm$age)
+f.lv = levels(easyshare_sub_narm$female)
+cs.lv = levels(easyshare_sub_narm$cogscore)
+dep.lv = levels(easyshare_sub_narm$depression)
+combos = data.frame(age=rep(age.lv,12), female=rep(f.lv,each = 42), education=rep(edu.lv,each = 21), depression=rep(dep.lv,each = 28))
+distcsf = predict(olr.fitf, newdata= combos ,type="p")
+distcsm = predict(olr.fitm, newdata= combos ,type="p")
+distcs = array(dim = c(length(cs.lv), length(age.lv), length(f.lv), length(edu.lv), length(dep.lv)), dimnames = list(cogscore = cs.lv, age = age.lv, female = f.lv, education = edu.lv, depression = dep.lv))
+distcs[,,1,,] = array(t(distcsm), dim=c(length(cs.lv), length(age.lv), 1, length(edu.lv), length(dep.lv)))
+distcs[,,2,,] = array(t(distcsf), dim=c(length(cs.lv), length(age.lv), 1, length(edu.lv), length(dep.lv)))
+bn.bayes2 = bn.bayes
+bn.bayes2$cogscore = distcs
+
+bn.fit.barchart(bn.bayes2$cogscore)
+```
 
 
+```{r}
+p1 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3),
+                     y=matrix(t(bn.bayes2$cogscore$prob[,,1,1,1]), ncol =1), color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
+        labels=levels(easyshare_sub_narm$age)) +
+  labs(x = "Age", y= "Conditional probability", color = "Cognitive score", title ="Male, Basic education, Low depression")
+```
 
 
 
