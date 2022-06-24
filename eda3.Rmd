@@ -20,15 +20,14 @@ library(bnlearn)
 library(Rgraphviz)
 ```
 
-#### Data Preparation
-
+# Data Preparation
 ```{r}
 # load dataset
 load("easySHARE_rel8_0_0.rda")
 easyshare = easySHARE_rel8_0_0
 
 # select variables
-easyshare <- easyshare %>%  dplyr::select(c(wave, age, female, country_mod, isced1997_r, chronic_mod, ever_smoked, smoking, br010_mod, eurod, bmi2, sp002_mod, sp008_, br015_, recall_1, recall_2))
+easyshare <- easyshare %>%  dplyr::select(c(wave, age, female, country_mod, isced1997_r, chronic_mod, ever_smoked, smoking, br010_mod, eurod, bmi2, sp002_mod, sp008_, br015_, recall_1, recall_2, orienti, numeracy_1, numeracy_2))
 # rename
 easyshare <- easyshare %>% rename(education = isced1997_r, drinking = br010_mod, depression = eurod, vigorous_act = br015_)
 
@@ -60,36 +59,45 @@ easyshare$social_help <- factor(easyshare$social_help, ordered = TRUE)
 # create a smoke variable
 easyshare$smoke <- easyshare$ever_smoked + easyshare$smoking
 easyshare$smoke <- factor(easyshare$smoke, ordered = TRUE)
-
-easyshare_sub = easyshare[easyshare$wave==5,]
 ```
 
-```{r, fig.height=15, fig.width=24}
-p1 = ggplot() + geom_bar(aes(x = easyshare_sub$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
-p2 = ggplot() + geom_bar(aes(x = easyshare_sub$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
-p3 = ggplot() + geom_bar(aes(x = easyshare_sub$sleep),color="darkblue", fill="lightblue")+  labs(x ="sleep")
+## Wave selection
+```{r}
+# show the observations in each wave
+table(easyshare$wave)
+# drop variables related to cogscore with large amount of missing values
+easyshare = subset(easyshare, select=-c(orienti, numeracy_1, numeracy_2))
+# to select wave with less missing values
+for (i in 4:8){
+  missmap(easyshare[easyshare$wave==i,], col = c("firebrick1", "dodgerblue"), main = paste("Missingness Map wave",i))
+}
+# focus the research on wave 5
+easyshare_sub = easyshare[easyshare$wave==5,]
+easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
+```
 
-p4 = ggplot() + geom_bar(aes(x = easyshare_sub$country_area),color="darkblue", fill="lightblue")+  labs(x ="country_area(country)")
-p5 = ggplot() + geom_bar(aes(x = easyshare_sub$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
-p6 = ggplot() + geom_bar(aes(x = easyshare_sub$education),color="darkblue", fill="lightblue")+  labs(x ="Education") +  geom_density(color = "black", fill = "gray")
+## Visualiaztion
+
+```{r, fig.height=15, fig.width=24}
+p1 = ggplot() + geom_bar(aes(x = easyshare_sub$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
+p2 = ggplot() + geom_bar(aes(x = easyshare_sub$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
+p3 = ggplot() + geom_bar(aes(x = easyshare_sub$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
+p4 = ggplot() + geom_bar(aes(x = easyshare_sub$education),color="darkblue", fill="lightblue")+  labs(x ="Education") +  geom_density(color = "black", fill = "gray")
+p5 = ggplot() + geom_bar(aes(x = easyshare_sub$country_area),color="darkblue", fill="lightblue")+  labs(x ="Area of country")
+p6 = ggplot() + geom_bar(aes(x = easyshare_sub$social_help),color="darkblue", fill="lightblue")+  labs(x ="social")
 p7 = ggplot() + geom_bar(aes(x = easyshare_sub$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
-#p8 = ggplot() + geom_bar(aes(x = easyshare_sub$ever_smoked),color="darkblue", fill="lightblue")+  labs(x ="Ever smoked daily")
 p8 = ggplot() + geom_bar(aes(x = easyshare_sub$smoke),color="darkblue", fill="lightblue")+  labs(x ="Smoke")
 p9 = ggplot() + geom_bar(aes(x = easyshare_sub$drinking),color="darkblue", fill="lightblue")+  labs(x ="Drinking behavior")
 p10 = ggplot() + geom_bar(aes(x = easyshare_sub$depression),color="darkblue", fill="lightblue")+  labs(x ="Depression scale")
 p11 = ggplot() + geom_bar(aes(x = easyshare_sub$bmi2),color="darkblue", fill="lightblue")+  labs(x ="Body Mass Index")
 p12 = ggplot() + geom_bar(aes(x = easyshare_sub$vigorous_act),color="darkblue", fill="lightblue")+  labs(x ="vigorous activities")
-p13 = ggplot() + geom_bar(aes(x = easyshare_sub$mar_stat),color="darkblue", fill="lightblue")+  labs(x ="mar_stat")
-p14 = ggplot() + geom_bar(aes(x = easyshare_sub$social_help),color="darkblue", fill="lightblue")+  labs(x ="social")
-#p15 = ggplot() + geom_bar(aes(x = easyshare_sub$social_help),color="darkblue", fill="lightblue")+  labs(x ="Activities of daily living index (high: has difficulties)")
- 
-grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, nrow = 3)
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, nrow = 3)
 ```
 
+## Rearrangement of variables's levels
 ```{r}
-library(forcats)
-#age:
-#easyshare_sub$age=easyshare_sub$age %>% fct_collapse("<60" = c("[0,50)","[50,60)"))
+# age
 easyshare_sub$age=easyshare_sub$age %>% fct_collapse(">80" = c("[80,85)", "[85,90)","[90,120)"))
 # cognitive score
 levels(easyshare_sub$cogscore) <- c("low","moderate","high")
@@ -97,60 +105,27 @@ levels(easyshare_sub$cogscore) <- c("low","moderate","high")
 levels(easyshare_sub$female) <- c("male","female")
 # education
 levels(easyshare_sub$education) <- list("basic" = c("1","2"), "secondary" = c("3","4"), "tertiary" = c("5","6"), "other" = c("0","95","97"))
-# Number of chronic diseases
-# easyshare_sub$chronic_mod=easyshare_sub$chronic_mod %>% fct_collapse(">=3" = c("3","4","5","6","7","8","9","10"))
+# number of chronic diseases
 levels(easyshare_sub$chronic_mod) <- list("none" = "0", "less" = c("1","2"), "much" = c("3","4","5","6","7","8","9","10"))
 # smoke
-# levels(easyshare_sub$ever_smoked) <- c("yes","no")
 levels(easyshare_sub$smoke) <- list("non-smoke" = "10", "smoke" = c("2","6"))
 # drinking
 levels(easyshare_sub$drinking) <- list("low" = c("1","2"), "moderate" = c("3","4","5"), "high" = c("6","7"))
 # depression
 levels(easyshare_sub$depression) <- list("low" = c("0","1","2","3"), "moderate" = c("4","5","6","7"), "high" = c("8","9","10","11","12"))
-# body mass index
-#levels(easyshare_sub$bmi2) <- list("normal" = c("1","2"), "overweight" = "3", "obese" = "4")
-# received and given help
-#levels(easyshare_sub$social_help) <- list("social" = c("2","6"), "no social" = "10")
+# social help
 levels(easyshare_sub$social_help) <- list("social" = "2", "moderate" = "6", "no social" = "10")
-# levels(easyshare_sub$recieve_help) <- c("yes","no")
-# levels(easyshare_sub$give_help) <- c("yes","no")
-# vigorous activities
-#levels(easyshare_sub$vigorous_act) <- list("frequent" = "1", "moderate" = c("2","3"), "never" = "4")
-# sleep
-#levels(easyshare_sub$sleep) <- c("no","yes")
 
-# drop useless variables: useless and inbalence 
-# easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, recall_2, adla, iadlza, mar_stat))
-easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, recall_2, ever_smoked, smoking, sp002_mod, sp008_))
-#### drop variables NA
+# drop useless variables
+easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, recall_2, ever_smoked, smoking, sp002_mod, sp008_, orienti, numeracy_1, numeracy_2))
+# drop NA variables 
 easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
 ```
 
-```{r, fig.height=15, fig.width=24}
-p1 = ggplot() + geom_bar(aes(x = easyshare_sub$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
-p2 = ggplot() + geom_bar(aes(x = easyshare_sub$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
-p3 = ggplot() + geom_bar(aes(x = easyshare_sub$sleep),color="darkblue", fill="lightblue")+  labs(x ="Trouble with sleeping")
-
-p4 = ggplot() + geom_bar(aes(x = easyshare_sub$country_area),color="darkblue", fill="lightblue")+  labs(x ="Country region")
-p5 = ggplot() + geom_bar(aes(x = easyshare_sub$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
-p6 = ggplot() + geom_bar(aes(x = easyshare_sub$education),color="darkblue", fill="lightblue")+  labs(x ="Education") +  geom_density(color = "black", fill = "gray")
-p7 = ggplot() + geom_bar(aes(x = easyshare_sub$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
-#p8 = ggplot() + geom_bar(aes(x = easyshare_sub$ever_smoked),color="darkblue", fill="lightblue")+  labs(x ="Ever smoked daily")
-p8 = ggplot() + geom_bar(aes(x = easyshare_sub$smoke),color="darkblue", fill="lightblue")+  labs(x ="Smoke")
-p9 = ggplot() + geom_bar(aes(x = easyshare_sub$drinking),color="darkblue", fill="lightblue")+  labs(x ="Drinking behavior")
-p10 = ggplot() + geom_bar(aes(x = easyshare_sub$depression),color="darkblue", fill="lightblue")+  labs(x ="Depression scale")
-p11 = ggplot() + geom_bar(aes(x = easyshare_sub$bmi2),color="darkblue", fill="lightblue")+  labs(x ="Body Mass Index")
-p12 = ggplot() + geom_bar(aes(x = easyshare_sub$vigorous_act),color="darkblue", fill="lightblue")+  labs(x ="vigorous activities")
-# p13 = ggplot() + geom_bar(aes(x = easyshare_sub$mar_stat),color="darkblue", fill="lightblue")+  labs(x ="mar_stat")
-# p14 = ggplot() + geom_bar(aes(x = easyshare_sub$daily_act),color="darkblue", fill="lightblue")+  labs(x ="Activities of daily living index (high: has difficulties)")
- p15 = ggplot() + geom_bar(aes(x = easyshare_sub$social_help),color="darkblue", fill="lightblue")+  labs(x ="social")
- 
-grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12,p15, nrow = 3)
-```
--------------------------- choose model
+# Models Compared
 
 ```{r}
-# Constraint-based algorithms
+# Create blacklist and whitelist  
 myblacklist = matrix(c("cogscore","age",
                    "female","age",
                    'country_area', "age",
@@ -202,44 +177,38 @@ myblacklist = matrix(c("cogscore","age",
                  byrow = TRUE, ncol=2, dimnames =list(NULL,c("from","to")))
 
 mywhitelist = matrix(c("drinking","chronic_mod",
-                       "smoke","chronic_mod",
-                       "social_help", "depression"),
-                 byrow = TRUE, ncol=2, dimnames =list(NULL,c("from","to")))
-
-mywhitelist = matrix(c("drinking","chronic_mod",
                        "smoke","chronic_mod"),
                  byrow = TRUE, ncol=2, dimnames =list(NULL,c("from","to")))
 ```
 
 ```{r}
-# iamb
+# constraint-based algorithm: iamb
 easyshare_sub.iamb =iamb(easyshare_sub, blacklist = myblacklist,whitelist = mywhitelist, test="mi")
 graphviz.plot(easyshare_sub.iamb)
 
-# hc(bic)
+# score-based structure algorithm: hc(bic)
 easyshare_sub.hc =hc(easyshare_sub_narm, blacklist = myblacklist, whitelist = mywhitelist, score="bic")
 graphviz.plot(easyshare_sub.hc)
 
-# hc(bde)
+# score-based structure algorithm: hc(bde)
 easyshare_sub.hc2 =hc(easyshare_sub_narm, blacklist = myblacklist, whitelist = mywhitelist, score="bde")
 graphviz.plot(easyshare_sub.hc2)
 ```
 
 ```{r}
-# choose the learning algorithm with smallest expected loss, result: choose hc(bic)
+# compare the learning algorithm and choose with smallest expected loss
 bn.cv(data = easyshare_sub_narm, bn = easyshare_sub.iamb, loss = "pred", loss.args = list(target = "cogscore"))
 bn.cv(data = easyshare_sub_narm, bn = easyshare_sub.hc, loss = "pred", loss.args = list(target = "cogscore"))
 bn.cv(data = easyshare_sub_narm, bn = easyshare_sub.hc2, loss = "pred", loss.args = list(target = "cogscore"))
 ```
 
-
+## Model optimization
 ```{r}
 # add the line from social_help to depression: can not add
 dag=easyshare_sub.iamb
 dag=set.arc(dag, from = "social_help", to= "depression")
 bn.cv(data = easyshare_sub_narm, bn = dag, loss = "pred", loss.args = list(target = "cogscore"))
 ```
-
 
 ```{r}
 # drop the line from country_area to social_help: can drop
@@ -248,8 +217,6 @@ dag2=drop.arc(dag2,  from = "country_area", to= "social_help")
 bn.cv(data = easyshare_sub_narm, bn = dag2, loss = "pred", loss.args = list(target = "cogscore"))
 ```
 
-
-
 ```{r}
 # add the line from social_help to depression: can not add
 dag3=dag2
@@ -257,17 +224,13 @@ dag3=set.arc(dag3, from = "social_help", to= "depression")
 bn.cv(data = easyshare_sub_narm, bn = dag3, loss = "pred", loss.args = list(target = "cogscore"))
 ```
 
--------------------------------------- fit the model
-
-```{r}
-# fit parameters
-bn.bayes = bn.fit(easyshare_sub.iamb, data=easyshare_sub_narm, method = "bayes",iss=10)
-bn.bayes$education
-bn.fit.barchart(bn.bayes$education)
-```
-
+## Modle fitting: learning local distributions
 
 ```{r, fig.height=15, fig.width=20}
+# fit parameters
+bn.bayes = bn.fit(easyshare_sub.iamb, data=easyshare_sub_narm, method = "bayes",iss=10)
+
+# levels of 
 age.lv = levels(easyshare_sub_narm$age)
 gender.lv = levels(easyshare_sub_narm$female)
 edu.lv = levels(easyshare_sub_narm$education)
@@ -288,7 +251,44 @@ for (i in 1:dim(bn.bayes$cogscore$prob)[3]){
   }
 }
 
-grid.arrange(p[1])
+for (i in 1:dim(bn.bayes$cogscore$prob)[3]){
+  for (j in 1:dim(bn.bayes$cogscore$prob)[5]){
+    p1 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,1,j]), ncol =1), 
+                           color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
+        geom_point() +
+        geom_line() + 
+        scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
+        labels=levels(easyshare_sub_narm$age)) +
+        labs(x = "Age", y= "Conditional probability", color = "Cognitive score", 
+             title = paste(gender.lv[i],"Basic education",paste(dep.lv[k],"depression",sep=' '),sep=', '))
+    p2 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,2,j]), ncol =1), 
+                           color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
+        geom_point() +
+        geom_line() + 
+        scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
+        labels=levels(easyshare_sub_narm$age)) +
+        labs(x = "Age", y= "Conditional probability", color = "Cognitive score", 
+             title = paste(gender.lv[i],"Secondary education",paste(dep.lv[k],"depression",sep=' '),sep=', '))
+    p3 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,3,j]), ncol =1), 
+                           color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
+        geom_point() +
+        geom_line() + 
+        scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
+        labels=levels(easyshare_sub_narm$age)) +
+        labs(x = "Age", y= "Conditional probability", color = "Cognitive score", 
+             title = paste(gender.lv[i],"Tertiary education",paste(dep.lv[k],"depression",sep=' '),sep=', '))
+    p4 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),3), y=matrix(t(bn.bayes$cogscore$prob[,,i,4,j]), ncol =1), 
+                           color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$age))))) + 
+        geom_point() +
+        geom_line() + 
+        scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$age))),
+        labels=levels(easyshare_sub_narm$age)) +
+        labs(x = "Age", y= "Conditional probability", color = "Cognitive score", 
+             title = paste(gender.lv[i],"Other education",paste(dep.lv[k],"depression",sep=' '),sep=', '))
+
+    grid.arrange(p1,p2,p3,p4, col=2)
+  }
+}
 ```
 
 
@@ -533,23 +533,7 @@ p4 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),
 grid.arrange(p1, p2, p3, p4, nrow = 2)
 ```
 
-
-```{r}
-library(MASS)
-olr.fit =polr(education ~ age+female+country_area, data = easyshare_sub_narm)
-distedu = predict(olr.fit, newdata= data.frame(age=levels(easyshare_sub_narm$age),female=levels(easyshare_sub_narm$female),country_area=levels(easyshare_sub_narm$country_area)),type="p")
-edu.lv = levels(easyshare_sub_narm$education)
-age.lv = levels(easyshare_sub_narm$age)
-female.lv = levels(easyshare_sub_narm$female)
-country_area.lv = levels(easyshare_sub_narm$country_areaage)
-distedu = array(t(distedu), dim=c(length(edu.lv),length(age.lv),length(female.lv),length(country_area.lv)), 
-                dimnames = list(education = edu.lv, age = age.lv, female = female.lv,country_area=country_area.lv))
-bn.bayes2 = bn.bayes
-bn.bayes2$education = distedu
-bn.fit.barchart(bn.bayes2$education)
-```
-
-
+## Modle fitting: learning local distributions via a custom fit
 ```{r}
 library(MASS)
 olr.fitf =polr(cogscore ~ age + education+depression, data = easyshare_sub_narm[easyshare_sub_narm$female=="female",])
@@ -582,82 +566,3 @@ p1 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$age))),
   labs(x = "Age", y= "Conditional probability", color = "Cognitive score", title ="Male, Basic education, Low depression")
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-#easyshare_sub = easyshare[easyshare$wave==5,]
-library(forcats)
-#age: 
-easyshare_sub$age=easyshare_sub$age %>% fct_collapse("<60" = c("[0,50)","[50,60)"))
-easyshare_sub$age=easyshare_sub$age %>% fct_collapse(">80" = c("[80,90)","[90,120)"))
-# education
-easyshare_sub$education=easyshare_sub$education %>% fct_collapse("1" = c("1","2"))
-easyshare_sub$education=easyshare_sub$education %>% fct_collapse("2" = c("3","4"))
-easyshare_sub$education=easyshare_sub$education %>% fct_collapse("3" = c("5","6") )
-easyshare_sub$education=easyshare_sub$education %>% fct_collapse("4" = c("95","0","97"))
-# Number of chronic diseases
-easyshare_sub$chronic_mod=easyshare_sub$chronic_mod %>% fct_collapse(">=3" = c("3","4","5","6","7","8","9","10"))
-# drinking
-levels(easyshare_sub$drinking) <- list("1" = "1", "2" = c("2","3"), "3" = c("4","5","6"), "4" = "7")
-# depression
-easyshare_sub$depression=easyshare_sub$depression %>% fct_collapse("4" = c("4","5","6","7","8","9","10","11","12"))
-# vigorous activities
-levels(easyshare_sub$vigorous_act) <- list("1" = "1", "2" = c("2","3"), "3" = "4")
-
-
-# drop useless variables: useless and inbalence 
-easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, recall_2, mar_stat))
-#### drop variables NA
-easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
-
-# easyshare_sub$age <- factor(easyshare_sub$age)
-# easyshare_sub$education <- factor(easyshare_sub$education, ordered = TRUE)
-# easyshare_sub$chronic_mod <- factor(easyshare_sub$chronic_mod, ordered = TRUE)
-# easyshare_sub$drinking <- factor(easyshare_sub$drinking, ordered = TRUE)
-# easyshare_sub$depression <- factor(easyshare_sub$depression, ordered = TRUE)
-# easyshare_sub$vigorous_act <- factor(easyshare_sub$vigorous_act, ordered = TRUE)
-
-easyshare_sub = easyshare[easyshare$wave==5,]
-easyshare_sub$age[easyshare_sub$age %in% c("[0,50)","[50,60)")]="50"
-easyshare_sub$age[easyshare_sub$age=="[80,90)" | easyshare_sub$age=="[90,120)"]="80"
-easyshare_sub$age <- factor(easyshare_sub$age)
-
-easyshare_sub$education[easyshare_sub$education == "1" | easyshare_sub$education == "2"] = "1"
-easyshare_sub$education[easyshare_sub$education == "3" | easyshare_sub$education == "4"] = "2"
-easyshare_sub$education[easyshare_sub$education == "5" | easyshare_sub$education == "6"] = "3"
-easyshare_sub$education[easyshare_sub$education == "0" | easyshare_sub$education == "95"| easyshare_sub$education == "97"] = "4"
-easyshare_sub$education <- factor(easyshare_sub$education, ordered = TRUE)
-
-easyshare_sub$chronic_mod[easyshare_sub$chronic_mod %in% c("3","4","5","6","7","8","9","10")]="3"
-easyshare_sub$chronic_mod <- factor(easyshare_sub$chronic_mod, ordered = TRUE)
-
-easyshare_sub$drinking[easyshare_sub$drinking=="2"|easyshare_sub$drinking=="3"]="2"
-easyshare_sub$drinking[easyshare_sub$drinking=="4"|easyshare_sub$drinking=="5"|easyshare_sub$drinking=="6"]="3"
-easyshare_sub$drinking[easyshare_sub$drinking=="7"]="4"
-easyshare_sub$drinking <- factor(easyshare_sub$drinking, ordered = TRUE)
-
-easyshare_sub$depression[easyshare_sub$depression %in% c("4","5","6","7","8","9","10","11","12")]="4"
-easyshare_sub$depression <- factor(easyshare_sub$depression, ordered = TRUE)
-
-easyshare_sub$vigorous_act[easyshare_sub$vigorous_act=="2"|easyshare_sub$vigorous_act=="3"]="2"
-easyshare_sub$vigorous_act[easyshare_sub$vigorous_act=="4"]="3"
-easyshare_sub$vigorous_act <- factor(easyshare_sub$vigorous_act, ordered = TRUE)
-
-# easyshare_sub$age <- factor(easyshare_sub$age)
-# easyshare_sub$education <- factor(easyshare_sub$education, ordered = TRUE)
-# easyshare_sub$chronic_mod <- factor(easyshare_sub$chronic_mod, ordered = TRUE)
-# easyshare_sub$drinking <- factor(easyshare_sub$drinking)
-# easyshare_sub$depression <- factor(easyshare_sub$depression)
-# easyshare_sub$vigorous_act <- factor(easyshare_sub$vigorous_act)
-```
