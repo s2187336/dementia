@@ -41,8 +41,14 @@ easyshare[easyshare < 0] <- NA
 table(easyshare$wave)
 # drop variables related to cogscore with large amount of missing values
 easyshare = subset(easyshare, select=-c(orienti, numeracy_1,numeracy_2))
-# to select wave with less missing values
+
+temp=subset(easyshare, select=-c(recall_1, recall_2,orienti, numeracy_1,numeracy_2))
 for (i in 4:8){
+  missmap(temp[temp$wave==i,], col = c("firebrick1", "dodgerblue"), main = paste("Missingness Map wave",i))
+}
+
+# to select wave with less missing values
+for (i in 1:8){
   missmap(easyshare[easyshare$wave==i,], col = c("firebrick1", "dodgerblue"), main = paste("Missingness Map wave",i))
 }
 ```
@@ -255,7 +261,14 @@ bn.cv(data = easyshare_sub_narm, bn = dag2, loss = "pred", loss.args = list(targ
 ci.test("social_help", "depression", test = "mi", data = easyshare_sub_narm)
 
 # the new dag: add the line from social_help to depression
+easyshare_sub.iamb = drop.arc(easyshare_sub.iamb, from = "smoke", to= "education")
 easyshare_sub.iamb = set.arc(easyshare_sub.iamb, from = "social_help", to= "depression")
+
+# show the final network after mordified
+graphviz.plot(easyshare_sub.iamb, shape = "ellipse", 
+              highlight = list(nodes = c("cogscore", parents(easyshare_sub.iamb, "cogscore")),
+                               arcs = incoming.arcs(easyshare_sub.iamb, "cogscore"), 
+                               col = "darkblue", fill = "lightblue", lwd = 3, lty = "dashed"))
 ```
 
 
@@ -692,24 +705,111 @@ grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12,p13,p14,p15,p16,p
 ```
 
 ```{r}
-table1=matrix(t(cbind(bn.bayes$cogscore$prob[,,1,2,1][,5],
+table1 = matrix(t(cbind(bn.bayes$cogscore$prob[,,1,2,1][,1],
+                      bn.bayes$cogscore$prob[,,1,2,2][,1],
+                      bn.bayes$cogscore$prob[,,1,2,3][,1])),ncol=1)
+
+pp1 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table1, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[0,55), M, Basic education")
+
+
+table2 = matrix(t(cbind(bn.bayes$cogscore$prob[,,1,2,1][,3],
+                      bn.bayes$cogscore$prob[,,1,2,2][,3],
+                      bn.bayes$cogscore$prob[,,1,2,3][,3])),ncol=1)
+
+pp2 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table2, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[60,65), M, Basic education")
+
+
+table3 = matrix(t(cbind(bn.bayes$cogscore$prob[,,1,2,1][,5],
                       bn.bayes$cogscore$prob[,,1,2,2][,5],
                       bn.bayes$cogscore$prob[,,1,2,3][,5])),ncol=1)
 
-ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3), y=table1, ncol =1), 
-                           color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression)))) + 
-        geom_point() +
-        geom_line() + 
-        scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+pp3 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table3, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
         labels=levels(easyshare_sub_narm$depression)) +
-        labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", 
-             title = "[70,75), M, Secondary education")
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[70,75), M, Basic education")
+
+
+table4 = matrix(t(cbind(bn.bayes$cogscore$prob[,,1,2,1][,7],
+                      bn.bayes$cogscore$prob[,,1,2,2][,7],
+                      bn.bayes$cogscore$prob[,,1,2,3][,7])),ncol=1)
+
+pp4 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table4, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title =">80, M, Basic education")
+
+
+table5 = matrix(t(cbind(bn.bayes$cogscore$prob[,,2,2,1][,1],
+                      bn.bayes$cogscore$prob[,,2,2,2][,1],
+                      bn.bayes$cogscore$prob[,,2,2,3][,1])),ncol=1)
+
+pp5 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table5, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[0,55), F, Basic education")
+
+
+table6 = matrix(t(cbind(bn.bayes$cogscore$prob[,,2,2,1][,3],
+                      bn.bayes$cogscore$prob[,,2,2,2][,3],
+                      bn.bayes$cogscore$prob[,,2,2,3][,3])),ncol=1)
+
+pp6 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table6, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[60,65), F, Basic education")
+
+
+table7 = matrix(t(cbind(bn.bayes$cogscore$prob[,,2,2,1][,5],
+                      bn.bayes$cogscore$prob[,,2,2,2][,5],
+                      bn.bayes$cogscore$prob[,,2,2,3][,5])),ncol=1)
+
+pp7 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table7, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title ="[70,75), F, Basic education")
+
+
+table8 = matrix(t(cbind(bn.bayes$cogscore$prob[,,2,2,1][,7],
+                      bn.bayes$cogscore$prob[,,2,2,2][,7],
+                      bn.bayes$cogscore$prob[,,2,2,3][,7])),ncol=1)
+
+pp8 = ggplot(mapping = aes(x = rep(seq(1:length(levels(easyshare_sub_narm$depression))),3),
+                     y=table8, color = rep(levels(easyshare_sub_narm$cogscore), each = length(levels(easyshare_sub_narm$depression))))) + 
+  geom_point() +
+  geom_line() +
+  scale_x_discrete(breaks=seq(1:length(levels(easyshare_sub_narm$depression))),
+        labels=levels(easyshare_sub_narm$depression)) +
+  labs(x = "Depression", y= "Conditional probability", color = "Cognitive score", title =">80, F, Basic education")
+
+grid.arrange(pp1, pp2, pp3, pp4, pp5, pp6, pp7, pp8, nrow = 2)
 ```
-
-
-
-
-
 
 
 
