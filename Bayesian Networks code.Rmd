@@ -122,26 +122,6 @@ easyshare$smoke <- factor(easyshare$smoke, ordered = TRUE)
 
 # focus the research on wave 5
 easyshare_sub = easyshare[easyshare$wave==5,]
-easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
-```
-
-## Visualiaztion
-
-```{r, fig.height=15, fig.width=24}
-p1 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
-p2 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
-p3 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
-p4 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$education),color="darkblue", fill="lightblue")+  labs(x ="Education") +  geom_density(color = "black", fill = "gray")
-p5 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$country_area),color="darkblue", fill="lightblue")+  labs(x ="Area of country")
-p6 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$social_help),color="darkblue", fill="lightblue")+  labs(x ="social")
-p7 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
-p8 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$smoke),color="darkblue", fill="lightblue")+  labs(x ="Smoke")
-p9 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$drinking),color="darkblue", fill="lightblue")+  labs(x ="Drinking behavior")
-p10 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$depression),color="darkblue", fill="lightblue")+  labs(x ="Depression scale")
-p11 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$bmi2),color="darkblue", fill="lightblue")+  labs(x ="Body Mass Index")
-p12 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$vigorous_act),color="darkblue", fill="lightblue")+  labs(x ="vigorous activities")
-
-grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, nrow = 3)
 ```
 
 ## Rearrangement of variables's levels
@@ -171,7 +151,24 @@ easyshare_sub = subset(easyshare_sub, select=-c(wave, country_mod, recall_1, rec
 # drop NA variables 
 easyshare_sub_narm <- easyshare_sub[complete.cases(easyshare_sub),]
 ```
+## Visualiaztion
 
+```{r, fig.height=15, fig.width=24}
+p1 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$cogscore),color="darkblue", fill="lightblue")+  labs(x ="Cogntive impairment")
+p2 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$age),color="darkblue", fill="lightblue")+  labs(x ="Age")
+p3 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$female),color="darkblue", fill="lightblue")+  labs(x ="Gender")
+p4 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$education),color="darkblue", fill="lightblue")+  labs(x ="Education") +  geom_density(color = "black", fill = "gray")
+p5 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$country_area),color="darkblue", fill="lightblue")+  labs(x ="Area of country")
+p6 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$social_help),color="darkblue", fill="lightblue")+  labs(x ="social")
+p7 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$chronic_mod),color="darkblue", fill="lightblue")+  labs(x ="Number of chronic diseases")
+p8 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$smoke),color="darkblue", fill="lightblue")+  labs(x ="Smoke")
+p9 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$drinking),color="darkblue", fill="lightblue")+  labs(x ="Drinking behavior")
+p10 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$depression),color="darkblue", fill="lightblue")+  labs(x ="Depression scale")
+p11 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$bmi2),color="darkblue", fill="lightblue")+  labs(x ="Body Mass Index")
+p12 = ggplot() + geom_bar(aes(x = easyshare_sub_narm$vigorous_act),color="darkblue", fill="lightblue")+  labs(x ="vigorous activities")
+
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, nrow = 3)
+```
 
 # Model
 
