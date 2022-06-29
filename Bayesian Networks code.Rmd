@@ -230,7 +230,7 @@ mywhitelist = matrix(c("drinking","chronic_mod",
 ## Structure learning
 ```{r}
 # constraint-based algorithm: iamb
-easyshare_sub.iamb =iamb(easyshare_sub, blacklist = myblacklist,whitelist = mywhitelist, test="mi")
+easyshare_sub.iamb =iamb(easyshare_sub_narm, blacklist = myblacklist,whitelist = mywhitelist, test="mi")
 graphviz.plot(easyshare_sub.iamb, shape = "ellipse", 
               highlight = list(nodes = c("cogscore", parents(easyshare_sub.iamb, "cogscore")),
                                arcs = incoming.arcs(easyshare_sub.iamb, "cogscore"), 
